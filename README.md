@@ -1,6 +1,6 @@
 # API automation
 
-#### Installation
+##### Installation
 You will need to have Ruby installed. Then Bundler for downloading dependencies.
 
 1. Download and install Ruby from http://rubyinstaller.org/downloads/ 
@@ -10,14 +10,14 @@ You will need to have Ruby installed. Then Bundler for downloading dependencies.
 
 
 
-#### Automation repository and dependency
+##### Automation repository and dependency
 1. Automation repository: git clone 
 2. Change directory to root of api_automation_rest_soap project (api_automation_rest_soap)
 3. Run `bundle install` to download dependencies.
 
 
 
-#### How to Run API Tests
+##### How to Run API Tests
 Using Rake you can run specific tests suites. Type 'rake -T' in terminal to see all Rake tasks to run.
 
 This is the command structure to run tests: <enviroment variables> rake <task>
@@ -34,7 +34,7 @@ Examples:
 
 
 
-#### Package dependency
+##### Package dependency
 gem 'rake'
 gem 'rspec'
 gem 'rspec-core'
@@ -59,7 +59,7 @@ savon Heavy metal SOAP client https://github.com/savonrb/savon
 
 
 
-#### Configuration
+##### Configuration
 config => hosts.json - list down host for Dev/QA
 
     {
@@ -77,7 +77,7 @@ config => headers-cookies.json - common headers other than Authentication token
 
 
 
-#### host url setup 
+##### host url setup 
 libs => helpers => setup.rb - Read host config and build base url, add save them in global variable
 
     hosts = convert_to_json(read_file('./config/hosts.json'))
@@ -92,7 +92,7 @@ libs => helpers => setup.rb - Read host config and build base url, add save them
 
 
 
-#### user authentication and login
+##### user authentication and login
 libs => helpers => login.rb - make changes in login_user to retrive authentication token and cookies, save them in global variable
 
     def login_user
@@ -121,7 +121,7 @@ libs => helpers => requests.rb - make changes in headers_cookies_manager for aut
 
 
 
-#### HTTP Request
+##### HTTP Request
 libs => helpers => requests.rb - list of available http methods
     def send_file(api_url, file_path, method='post')
     def send_multipart_data(api_url, json, method = "post")
@@ -135,7 +135,7 @@ libs => helpers => requests.rb - list of available http methods
 
 
 
-#### Assertions
+##### Assertions
 libs => assertions.rb - list of available assertions methods
     def verify_response(response, expected_response, expected_response_code)
     def verify_response_code(response, expected_response_code)
@@ -149,7 +149,7 @@ libs => assertions.rb - list of available assertions methods
     
 
 
-#### API endpoint lib for CRUD and payload
+##### API endpoint lib for CRUD and payload
 Create lib dir and file for endpoint to test (ex libs => util-reqres and users.rb) 
 Define all the CRUD operation for endpoint
 Expose request response json payload
@@ -216,7 +216,7 @@ Expose request response json payload
 
 
 
-#### Test for API
+##### Test for API
 Create file for endpoint to test (ex spec => reqres => users_spec.rb) 
 
     RSpec.describe "Users Reqres", :users do
@@ -237,7 +237,7 @@ Create file for endpoint to test (ex spec => reqres => users_spec.rb)
                 #verify_response_template(response, expected_response, 200)
             end
         }
-    end
+        end
     end
 
 
