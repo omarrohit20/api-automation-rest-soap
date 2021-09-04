@@ -1,0 +1,8 @@
+{
+    "dev": {
+        "reqres": "reqres.in"
+    },
+    "qa": {
+        "reqres": "reqres.in"
+    }
+}

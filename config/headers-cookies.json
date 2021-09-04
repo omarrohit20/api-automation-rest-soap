@@ -1,0 +1,9 @@
+{
+    "headers": {
+        "Content-Type": "application/json",
+        "Connection": "keep-alive"
+    },
+    "cookies": {
+        "test": "dummy-test"
+    }
+}
