@@ -3,7 +3,7 @@
 ## Installation
 You will need to have Ruby installed. Then Bundler for downloading dependencies.
 1. Download and install Ruby from http://rubyinstaller.org/downloads/ 
-   Ruby 2.5 with DevKit. Make sure for full installation along with devkit
+   Ruby 2.5+ with DevKit. Make sure for full installation along with devkit
 2. Add Ruby bin path to Path variable
 3. Gem Installation – gem install bundler in command prompt
 
