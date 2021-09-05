@@ -36,6 +36,7 @@ Examples:
 
 ##### Package dependency
    gem 'rake'
+   
    gem 'rspec'
    gem 'rspec-core'
    gem 'rspec_junit_formatter'
