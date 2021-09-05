@@ -14,14 +14,15 @@ def login_user
   # end
   # $auth_token_cookie = response.cookies['authToken']
   # $cookies = response.cookies
-  begin
-    url_for_send_token = $reqres + 'api/login'
-    response = RestClient.post(url_for_send_token, { "email": "#{$user[:username]}", "password": "#{$user[:password]}" }, content_type: :json, accept: :json)
-  rescue RestClient::Exception => e
-    raise e
-  end
-  $auth_token = response["token"]
-  $cookies = response.cookies
+
+  # begin
+  #   url_for_send_token = $reqres_host + 'api/login'
+  #   response = RestClient.post(url_for_send_token, { "email": "#{$user[:username]}", "password": "#{$user[:password]}" }, content_type: :json, accept: :json)
+  # rescue RestClient::Exception => e
+  #   raise e
+  # end
+  # $auth_token = response["token"]
+  # $cookies = response.cookies
 end
 
 def login_with_default_creds

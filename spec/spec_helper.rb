@@ -3,7 +3,6 @@ require "rspec"
 require "json"
 require "securerandom"
 require "jsonpath"
-require "gmail"
 require "./libs/helpers/setup"
 require "./libs/helpers/requests"
 require "./libs/helpers/common"
@@ -29,9 +28,9 @@ username = ENV['username']
 password = ENV['password']
 
 if username && password
-  $user_test = {local_name: 'external_user', username: username, password: password}
+  $user_test_default = {local_name: 'external_user', username: username, password: password}
 else
-  $user_test = {local_name: 'global_user', username: 'test123@mailinator.com', password: 'Automation123'}
+  $user_test_default = {local_name: 'global_user', username: 'test123@mailinator.com', password: 'Automation123'}
 end
 
 $tags = Helpers::Tags.new(RSpec.configuration)
@@ -51,9 +50,8 @@ RSpec.configure do |config|
   set_hosts
 
   config.before(:suite) do
-    
-    set_user($user_test)
-    $log.info "Using user #{$user_test[:username]}"
+    set_user($user_test_default)
+    $log.info "Using user #{$user_test_default[:username]}"
     #check_if_server_alive
     login_with_default_creds
   end
