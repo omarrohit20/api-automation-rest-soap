@@ -35,15 +35,15 @@ Examples:
 
 
 ##### Package dependency
-gem 'rake'
-gem 'rspec'
-gem 'rspec-core'
-gem 'rspec_junit_formatter'
-gem 'rspec-retry'
-gem 'allure-rspec'
-gem 'jsonpath'
-gem 'rest-client'
-gem 'savon', '~> 2.12.0'
+   gem 'rake'
+   gem 'rspec'
+   gem 'rspec-core'
+   gem 'rspec_junit_formatter'
+   gem 'rspec-retry'
+   gem 'allure-rspec'
+   gem 'jsonpath'
+   gem 'rest-client'
+   gem 'savon', '~> 2.12.0'
 
 Rake is a Make-like program implemented in Ruby. Tasks and dependencies are specified in standard Ruby syntax.
 
