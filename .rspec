@@ -1,0 +1,8 @@
+--require spec_helper
+--format documentation
+--format RspecJunitFormatter
+--out reports/report.xml
+--format html
+--out reports/report.html
+--color
+
