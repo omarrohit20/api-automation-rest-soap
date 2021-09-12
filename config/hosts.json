@@ -1,8 +1,10 @@
 {
     "dev": {
-        "reqres": "reqres.in"
+        "reqres": "reqres.in",
+        "numberconversion_host": "www.dataaccess.com"
     },
     "qa": {
-        "reqres": "reqres.in"
+        "reqres": "reqres.in",
+        "numberconversion_host": "www.dataaccess.com"
     }
 }

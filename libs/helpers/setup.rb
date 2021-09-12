@@ -7,11 +7,17 @@ def set_hosts
     $log.info "environment is #{environment}!"
   end
 
-  $reqres_host = 'https://' + env_hosts['reqres'] + '/'
-  #$oktadomain = env_hosts["oktadomain"]
-  #$okta = env_hosts["okta"]
-  #$okta_session_token_url = $oktadomain + '/api/v1/authn' unless $oktadomain.nil?
-  #$okta_access_token_url = $okta + '/v1/authorize' unless $okta.nil?
+  ENV["rest"] = "true" if ENV["rest"].nil?
+  if ENV["rest"] = "true"
+    $reqres_host = 'https://' + env_hosts['reqres'] + '/'
+    #$oktadomain = env_hosts["oktadomain"]
+    #$okta = env_hosts["okta"]
+    #$okta_session_token_url = $oktadomain + '/api/v1/authn' unless $oktadomain.nil?
+    #$okta_access_token_url = $okta + '/v1/authorize' unless $okta.nil?
+  else
+    $numberconversion_host = "https://" + env_hosts["numberconversion_host"] + "/webservicesserver/numberconversion.wso?WSDL"
+  end
+
 end
 
 def exit_with_error(error)
