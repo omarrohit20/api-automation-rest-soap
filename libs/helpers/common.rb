@@ -52,18 +52,7 @@ def read_csv_file_to_hash(file_path, skip_number_sign = true)
   file_hash = Array.new
   file_contents.each do |row|
     row_hash = row.to_hash
-    row_hash["serviceOptions"] = row_hash["serviceOptions"].split(",") if row_hash.keys.include?("serviceOptions")
-    file_hash.push(row_hash)
-  end
-  file_hash
-end
-
-def read_csv_file_to_hash_aria(file_path, skip_number_sign = false)
-  file_contents = read_csv_file(file_path, skip_number_sign)
-  file_hash = Array.new
-  file_contents.each do |row|
-    row_hash = row.to_hash
-    row_hash["serviceOptions"] = row_hash["serviceOptions"].split(",") if row_hash.keys.include?("serviceOptions")
+    puts row
     file_hash.push(row_hash)
   end
   file_hash
