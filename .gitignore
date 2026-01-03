@@ -1,1 +1,4 @@
 /*.gem
+libs/helpers/test_mcp/node_modules
+reports/*.html
+reports/*.xml

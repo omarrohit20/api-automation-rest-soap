@@ -1,0 +1,9 @@
+{
+  "servers": {
+    "rspec-test-generator": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["libs/helpers/test_mcp/build/index.js"]
+    }
+  }
+}

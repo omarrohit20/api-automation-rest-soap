@@ -1,0 +1,27 @@
+{
+  "name": "rspec-test-generator-mcp",
+  "version": "1.0.0",
+  "description": "MCP server that generates Ruby RSpec test cases from API curl requests",
+  "type": "module",
+  "bin": {
+    "rspec-test-generator-mcp": "./build/index.js"
+  },
+  "scripts": {
+    "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
+    "dev": "tsx src/index.ts",
+    "watch": "tsc --watch"
+  },
+  "keywords": ["mcp", "rspec", "ruby", "testing", "api"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2",
+    "tsx": "^4.19.2"
+  },
+  "files": ["build"]
+}

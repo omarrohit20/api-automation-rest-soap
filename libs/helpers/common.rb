@@ -44,7 +44,7 @@ end
 def read_csv_file(file_path, skip_number_sign = true)
   settings = { headers: true, skip_blanks: true, encoding: "UTF-8" }
   settings.merge!(skip_lines: /#(.*)/) if skip_number_sign
-  CSV.read(file_path, settings)
+  CSV.read(file_path, **settings)
 end
 
 def read_csv_file_to_hash(file_path, skip_number_sign = true)
