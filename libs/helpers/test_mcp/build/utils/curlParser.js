@@ -50,6 +50,7 @@ export function parseCurl(curlCommand) {
         method,
         headers,
         requestBody,
-        queryParams: Object.keys(queryParams).length > 0 ? queryParams : undefined
+        queryParams: Object.keys(queryParams).length > 0 ? queryParams : undefined,
+        fullUrl
     };
 }

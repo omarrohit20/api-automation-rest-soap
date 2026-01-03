@@ -16,6 +16,7 @@ export interface ApiDetails {
   headers: Record<string, string>;
   requestBody?: any;
   queryParams?: Record<string, string>;
+  fullUrl?: string;
 }
 
 export interface TestCase {

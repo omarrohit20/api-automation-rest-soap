@@ -5,7 +5,8 @@ An MCP (Model Context Protocol) server that automatically generates Ruby RSpec t
 ## Features
 
 - **Parse Curl Requests**: Extract API details (URL, method, headers, body) from curl commands
-- **Generate RSpec Tests**: Create functional and component test cases automatically
+- **Generate RSpec Tests**: Create functional, component, and non-functional test cases automatically
+- **Generate k6 Scripts**: Create k6 performance test scripts from curl commands
 - **Manage Spec Files**: Create new or edit existing RSpec spec files
 - **Framework Analysis**: Analyze your Ruby/RSpec test framework structure
 - **Complete Workflow**: Single command to parse, generate, and save tests
@@ -59,7 +60,12 @@ Generates RSpec functional and component test cases from a curl command.
 
 **Parameters:**
 - `curlCommand` (string, required): The curl command to generate tests for
-- `testType` (string, optional): Type of tests - "functional", "component", or "both" (default: "both")
+- `testType` (string, optional): Type of tests - "functional", "component", "non-functional", "both" (default), or "all"
+  - **functional**: Tests success/error scenarios
+  - **component**: Tests request/response structure
+  - **non-functional**: Tests security, performance, reliability, compatibility, and availability
+  - **both**: Combines functional + component
+  - **all**: Combines functional + component + non-functional
 - `description` (string, optional): Description for the test suite
 
 **Returns:** Generated RSpec test code with describe blocks, contexts, and test cases.
@@ -95,7 +101,53 @@ RSpec.describe 'POST /users API' do
 end
 ```
 
-### 3. manage_spec_file
+### 3. generate_k6_script
+
+Generates a k6 performance testing script from a curl command.
+
+**Parameters:**
+- `curlCommand` (string, required): The curl command to convert
+- `vus` (number, optional): Virtual users (default: 10)
+- `duration` (string, optional): Test duration (default: "30s")
+- `iterations` (number, optional): Fixed number of iterations instead of duration
+- `thresholds` (array[string], optional): Thresholds for `http_req_duration` (e.g., `"p(95)<800"`)
+- `sleepDuration` (number, optional): Seconds to sleep between iterations (default: 1)
+
+**Example Output:**
+```javascript
+import http from 'k6/http';
+import { check, sleep } from 'k6';
+
+export const options = {
+  vus: 10,
+  duration: '30s',
+  thresholds: {
+    http_req_duration: [
+      'p(95)<800'
+    ]
+  }
+};
+
+export default function () {
+  const url = 'https://api.example.com/users';
+  const headers = {
+    "Content-Type": "application/json"
+  };
+  const payload = JSON.stringify({
+    "name": "John",
+    "email": "john@example.com"
+  });
+  const params = { headers };
+  const res = http.request('POST', url, payload, params);
+  check(res, {
+    'status is 2xx': (r) => r.status >= 200 && r.status < 300,
+    'response time < 800ms': (r) => r.timings.duration < 800
+  });
+  sleep(1);
+}
+```
+
+### 4. manage_spec_file
 
 Creates a new spec file or edits an existing one with generated test content.
 
@@ -109,7 +161,7 @@ Creates a new spec file or edits an existing one with generated test content.
 - **update**: Replaces entire content of existing file
 - **append**: Adds content to the end of existing file
 
-### 4. analyze_framework
+### 5. analyze_framework
 
 Analyzes your Ruby/RSpec test framework structure to understand patterns and helpers.
 
@@ -119,60 +171,108 @@ Analyzes your Ruby/RSpec test framework structure to understand patterns and hel
 - Test patterns and structure
 - Framework conventions
 
-### 5. generate_complete_tests
+### 6. generate_complete_tests
 
 Complete workflow: parses curl command, generates tests, and creates/updates spec file in one operation.
 
 **Parameters:**
 - `curlCommand` (string, required): The curl command to generate tests for
 - `specFilePath` (string, required): Path where to save the spec file
-- `testType` (string, optional): Type of tests - "functional", "component", or "both" (default: "both")
+- `testType` (string, optional): Type of tests - "functional", "component", "non-functional", "both" (default), or "all"
 - `description` (string, optional): Description for the test suite
 - `mode` (string, optional): File operation mode - "create", "update", or "append" (default: "create")
 
-**Example Usage:**
+### 7. generate_non_functional_tests_file
 
+**NEW**: Generates only non-functional tests in a **separate file**.
+
+Automatically creates a file with `_non_functional` suffix (e.g., `users_non_functional_spec.rb`)
+
+**Parameters:**
+- `curlCommand` (string, required): The curl command to generate non-functional tests for
+- `specFilePath` (string, required): Base spec file path (will create non_functional variant)
+- `description` (string, optional): Description for the test suite
+- `mode` (string, optional): File operation mode - "create", "update", or "append" (default: "create")
+
+**Example:** Provide `spec/api/users_spec.rb` → Creates `spec/api/users_non_functional_spec.rb`
+
+### 8. generate_functional_and_non_functional_split
+
+**NEW**: Generates functional+component tests and non-functional tests in **separate files**.
+
+**Parameters:**
+- `curlCommand` (string, required): The curl command to generate tests for
+- `specFilePath` (string, required): Path for main spec file (functional+component tests)
+- `description` (string, optional): Description for the test suite
+- `mode` (string, optional): File operation mode - "create", "update", or "append" (default: "create")
+
+**Output Files:**
+- `specFilePath`: Contains functional + component tests
+- `specFilePath_non_functional`: Contains non-functional tests
+
+**Example:**
+- Input: `spec/api/users_spec.rb`
+- Output 1: `spec/api/users_spec.rb` (functional + component)
+- Output 2: `spec/api/users_non_functional_spec.rb` (non-functional)
+
+## Workflow Examples
+
+### Scenario 1: Generate All Tests in One File
+
+Use `generate_complete_tests` with `testType: "all"`:
 ```
-Generate tests for this curl:
-curl -X POST https://api.example.com/users \
-  -H "Content-Type: application/json" \
-  -d '{"name":"John","email":"john@example.com"}'
-
-Save to: spec/api/users_spec.rb
+Provides: all functional + component + non-functional tests in a single spec file
+Example: spec/api/users_spec.rb
 ```
 
-## Workflow Example
+### Scenario 2: Generate Functional and Non-Functional in Separate Files
 
-### Option 1: Step-by-Step
-
-1. **Parse the curl request:**
-   ```
-   Use parse_curl with your curl command
-   ```
-
-2. **Generate test cases:**
-   ```
-   Use generate_tests with the same curl command
-   Specify testType: "both" to get functional and component tests
-   ```
-
-3. **Save to file:**
-   ```
-   Use manage_spec_file with mode: "create"
-   Provide the generated content and file path
-   ```
-
-### Option 2: All-in-One
-
-Use `generate_complete_tests` to execute all steps automatically:
+Use `generate_functional_and_non_functional_split`:
 ```
-Provide curl command and spec file path
-The tool will parse, generate, and save in one operation
+Input spec path: spec/api/users_spec.rb
+
+Output 1: spec/api/users_spec.rb
+- Functional tests (success/error scenarios)
+- Component tests (request/response structure)
+
+Output 2: spec/api/users_non_functional_spec.rb
+- Security tests
+- Performance tests
+- Reliability tests
+- Compatibility tests
+- Availability tests
 ```
+
+### Scenario 3: Generate Only Non-Functional Tests
+
+Use `generate_non_functional_tests_file`:
+```
+Input spec path: spec/api/users_spec.rb
+
+Output: spec/api/users_non_functional_spec.rb
+- Contains only non-functional tests
+- Can be run separately from functional tests
+```
+
+### Scenario 4: Step-by-Step Manual Workflow
+
+1. Use `parse_curl` - Extract API details
+2. Use `generate_tests` - Generate specific test types
+3. Use `manage_spec_file` - Save to file with desired mode
+
+## File Naming Convention
+
+The MCP server automatically generates non-functional test file names:
+
+| Main File | Non-Functional File |
+|-----------|-------------------|
+| `spec/api/users_spec.rb` | `spec/api/users_non_functional_spec.rb` |
+| `spec/requests/products_spec.rb` | `spec/requests/products_non_functional_spec.rb` |
+| `test/api/auth_spec.rb` | `test/api/auth_non_functional_spec.rb` |
 
 ## Generated Test Structure
 
-The tool generates two types of tests:
+The tool generates multiple types of tests:
 
 ### Functional Tests
 - Success scenarios (2xx status codes)
@@ -185,6 +285,15 @@ The tool generates two types of tests:
 - Header verification
 - Query parameter validation
 - Response schema validation
+
+### Non-Functional Tests
+- **Security**: Missing headers, malformed JSON, SQL injection protection
+- **Performance**: Response time thresholds, response size consistency
+- **Reliability**: Concurrent request handling, transient error recovery
+- **Compatibility**: Content-type handling, optional headers
+- **Availability**: Accessibility, error message format validation
+
+
 
 ## Framework Detection
 

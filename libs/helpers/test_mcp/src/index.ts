@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import * as path from 'path';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
@@ -7,8 +8,9 @@ import {
   ListToolsRequestSchema
 } from '@modelcontextprotocol/sdk/types.js';
 import { parseCurl } from './utils/curlParser.js';
-import { generateRSpecTests } from './utils/testGenerator.js';
-import { readSpecFile, writeSpecFile, analyzeFramework } from './utils/fileManager.js';
+import { generateRSpecTests, generateNonFunctionalTestsFile, generateFunctionalTestsFile } from './utils/testGenerator.js';
+import { readSpecFile, writeSpecFile, analyzeFramework, getNonFunctionalSpecPath } from './utils/fileManager.js';
+import { generateK6Script } from './utils/k6Generator.js';
 
 // Create MCP server instance
 const server = new Server({
@@ -50,12 +52,51 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             testType: {
               type: 'string',
-              enum: ['functional', 'component', 'both'],
-              description: 'Type of tests to generate (default: both)'
+              enum: ['functional', 'component', 'non-functional', 'both', 'all'],
+              description: 'Type of tests to generate (default: both). Use "all" for functional + component + non-functional'
             },
             description: {
               type: 'string',
               description: 'Description for the test suite'
+            }
+          },
+          required: ['curlCommand']
+        }
+      },
+      {
+        name: 'generate_k6_script',
+        description: 'Generate a k6 performance test script from a curl command',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            curlCommand: {
+              type: 'string',
+              description: 'The curl command to convert'
+            },
+            vus: {
+              type: 'number',
+              description: 'Number of virtual users (default: 10)'
+            },
+            duration: {
+              type: 'string',
+              description: 'Test duration (default: 30s)'
+            },
+            iterations: {
+              type: 'number',
+              description: 'Fixed number of iterations (optional)'
+            },
+            thresholds: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Thresholds for http_req_duration (optional)'
+            },
+            sleepDuration: {
+              type: 'number',
+              description: 'Sleep between iterations in seconds (default: 1)'
+            },
+            scriptFileName: {
+              type: 'string',
+              description: 'Name of the k6 script file to create in perfk6 folder (default: k6_script.js)'
             }
           },
           required: ['curlCommand']
@@ -108,8 +149,62 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             testType: {
               type: 'string',
-              enum: ['functional', 'component', 'both'],
-              description: 'Type of tests to generate'
+              enum: ['functional', 'component', 'non-functional', 'both', 'all'],
+              description: 'Type of tests to generate. Use "all" for functional + component + non-functional'
+            },
+            description: {
+              type: 'string',
+              description: 'Description for the test suite'
+            },
+            mode: {
+              type: 'string',
+              enum: ['create', 'update', 'append'],
+              description: 'File operation mode (default: create)'
+            }
+          },
+          required: ['curlCommand', 'specFilePath']
+        }
+      },
+      {
+        name: 'generate_non_functional_tests_file',
+        description: 'Generate only non-functional tests and save to a separate file (e.g., users_non_functional_spec.rb)',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            curlCommand: {
+              type: 'string',
+              description: 'The curl command to generate non-functional tests for'
+            },
+            specFilePath: {
+              type: 'string',
+              description: 'Base spec file path (will create non_functional variant)'
+            },
+            description: {
+              type: 'string',
+              description: 'Description for the test suite'
+            },
+            mode: {
+              type: 'string',
+              enum: ['create', 'update', 'append'],
+              description: 'File operation mode (default: create)'
+            }
+          },
+          required: ['curlCommand', 'specFilePath']
+        }
+      },
+      {
+        name: 'generate_functional_and_non_functional_split',
+        description: 'Generate functional+component tests and non-functional tests in separate files',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            curlCommand: {
+              type: 'string',
+              description: 'The curl command to generate tests for'
+            },
+            specFilePath: {
+              type: 'string',
+              description: 'Path for main spec file (functional+component tests)'
             },
             description: {
               type: 'string',
@@ -156,7 +251,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       
       case 'generate_tests': {
         const curlCommand = args.curlCommand as string;
-        const testType = (args.testType as 'functional' | 'component' | 'both') || 'both';
+        const testType = (args.testType as 'functional' | 'component' | 'non-functional' | 'both' | 'all') || 'both';
         const description = args.description as string | undefined;
         
         const apiDetails = parseCurl(curlCommand);
@@ -173,6 +268,41 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             text: tests
           }]
         };
+      }
+
+      case 'generate_k6_script': {
+        const curlCommand = args.curlCommand as string;
+        const scriptFileName = args.scriptFileName as string || 'k6_script.js';
+        const apiDetails = parseCurl(curlCommand);
+
+        const script = generateK6Script(apiDetails, {
+          vus: args.vus as number | undefined,
+          duration: args.duration as string | undefined,
+          iterations: args.iterations as number | undefined,
+          thresholds: args.thresholds as string[] | undefined,
+          sleepDuration: args.sleepDuration as number | undefined
+        });
+
+        // Save to perfk6 folder
+        const perfk6Dir = path.resolve('../../../perfk6');
+        const filePath = path.join(perfk6Dir, scriptFileName);
+        
+        try {
+          await writeSpecFile(filePath, script, true);
+          return {
+            content: [{
+              type: 'text',
+              text: `Created k6 script: ${filePath}\n\n${script}`
+            }]
+          };
+        } catch (error) {
+          return {
+            content: [{
+              type: 'text',
+              text: `Error creating k6 script: ${(error as Error).message}`
+            }]
+          };
+        }
       }
       
       case 'manage_spec_file': {
@@ -216,7 +346,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'generate_complete_tests': {
         const curlCommand = args.curlCommand as string;
         const specFilePath = args.specFilePath as string;
-        const testType = (args.testType as 'functional' | 'component' | 'both') || 'both';
+        const testType = (args.testType as 'functional' | 'component' | 'non-functional' | 'both' | 'all') || 'both';
         const description = args.description as string | undefined;
         const mode = (args.mode as 'create' | 'update' | 'append') || 'create';
         
@@ -246,6 +376,88 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           content: [{
             type: 'text',
             text: `Successfully generated tests and ${mode === 'create' ? 'created' : mode === 'update' ? 'updated' : 'appended to'} spec file: ${specFilePath}\n\nAPI Details:\n${JSON.stringify(apiDetails, null, 2)}`
+          }]
+        };
+      }
+      
+      case 'generate_non_functional_tests_file': {
+        const curlCommand = args.curlCommand as string;
+        const specFilePath = args.specFilePath as string;
+        const description = args.description as string | undefined;
+        const mode = (args.mode as 'create' | 'update' | 'append') || 'create';
+        
+        // Parse curl
+        const apiDetails = parseCurl(curlCommand);
+        
+        // Analyze framework
+        const frameworkContext = await analyzeFramework();
+        
+        // Generate non-functional tests
+        const nonFunctionalTests = generateNonFunctionalTestsFile(apiDetails, description, frameworkContext);
+        
+        // Determine file path for non-functional tests
+        const nonFunctionalPath = getNonFunctionalSpecPath(specFilePath);
+        
+        // Write to file
+        if (mode === 'append') {
+          const existing = await readSpecFile(nonFunctionalPath);
+          const combined = existing.content + '\n\n' + nonFunctionalTests;
+          await writeSpecFile(nonFunctionalPath, combined, true);
+        } else {
+          await writeSpecFile(nonFunctionalPath, nonFunctionalTests, mode === 'update');
+        }
+        
+        return {
+          content: [{
+            type: 'text',
+            text: `Successfully generated non-functional tests and ${mode === 'create' ? 'created' : mode === 'update' ? 'updated' : 'appended to'} file: ${nonFunctionalPath}\n\nAPI Details:\n${JSON.stringify(apiDetails, null, 2)}`
+          }]
+        };
+      }
+      
+      case 'generate_functional_and_non_functional_split': {
+        const curlCommand = args.curlCommand as string;
+        const specFilePath = args.specFilePath as string;
+        const description = args.description as string | undefined;
+        const mode = (args.mode as 'create' | 'update' | 'append') || 'create';
+        
+        // Parse curl
+        const apiDetails = parseCurl(curlCommand);
+        
+        // Analyze framework
+        const frameworkContext = await analyzeFramework();
+        
+        // Generate functional+component tests
+        const functionalTests = generateFunctionalTestsFile(apiDetails, description, frameworkContext);
+        
+        // Generate non-functional tests
+        const nonFunctionalTests = generateNonFunctionalTestsFile(apiDetails, description, frameworkContext);
+        
+        // Determine file paths
+        const nonFunctionalPath = getNonFunctionalSpecPath(specFilePath);
+        
+        // Write functional tests
+        if (mode === 'append') {
+          const existing = await readSpecFile(specFilePath);
+          const combined = existing.content + '\n\n' + functionalTests;
+          await writeSpecFile(specFilePath, combined, true);
+        } else {
+          await writeSpecFile(specFilePath, functionalTests, mode === 'update');
+        }
+        
+        // Write non-functional tests
+        if (mode === 'append') {
+          const existing = await readSpecFile(nonFunctionalPath);
+          const combined = existing.content + '\n\n' + nonFunctionalTests;
+          await writeSpecFile(nonFunctionalPath, combined, true);
+        } else {
+          await writeSpecFile(nonFunctionalPath, nonFunctionalTests, mode === 'update');
+        }
+        
+        return {
+          content: [{
+            type: 'text',
+            text: `Successfully generated split tests:\n- Functional & Component: ${specFilePath}\n- Non-Functional: ${nonFunctionalPath}\n\nAPI Details:\n${JSON.stringify(apiDetails, null, 2)}`
           }]
         };
       }

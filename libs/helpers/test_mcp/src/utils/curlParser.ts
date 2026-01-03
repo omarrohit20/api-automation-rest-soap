@@ -60,6 +60,7 @@ export function parseCurl(curlCommand: string): ApiDetails {
     method,
     headers,
     requestBody,
-    queryParams: Object.keys(queryParams).length > 0 ? queryParams : undefined
+    queryParams: Object.keys(queryParams).length > 0 ? queryParams : undefined,
+    fullUrl
   };
 }

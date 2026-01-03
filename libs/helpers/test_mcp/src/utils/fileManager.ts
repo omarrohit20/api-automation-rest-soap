@@ -65,6 +65,17 @@ async function fileExists(filePath: string): Promise<boolean> {
 }
 
 /**
+ * Generate non-functional test file path from main spec file path
+ * e.g., spec/api/users_spec.rb -> spec/api/users_non_functional_spec.rb
+ */
+export function getNonFunctionalSpecPath(specFilePath: string): string {
+  const dir = path.dirname(specFilePath);
+  const fileName = path.basename(specFilePath, '.rb');
+  const nonFunctionalFileName = `${fileName}_non_functional.rb`;
+  return path.join(dir, nonFunctionalFileName);
+}
+
+/**
  * Analyze the Ruby/RSpec framework structure
  */
 export async function analyzeFramework(): Promise<any> {
